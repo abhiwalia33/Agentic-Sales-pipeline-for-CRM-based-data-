@@ -5,7 +5,7 @@ clean SQLite warehouse, a Power BI dashboard, and a natural-language Q&A
 agent out — built to practice the full path from raw data to something an
 actual business user can query in plain English.
 
-**🔗 Live demo:** _add your Streamlit Community Cloud URL here after deploying_
+**🔗 Live demo:** [e2eew2hyaaopgdvfehxz2c.streamlit.app](https://e2eew2hyaaopgdvfehxz2c.streamlit.app/)
 
 ---
 
