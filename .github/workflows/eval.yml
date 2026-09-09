@@ -1,0 +1,35 @@
+# Runs the agent eval suite automatically on every push to main.
+#
+# A "workflow" is a YAML file describing a pipeline of steps GitHub runs
+# for you on a fresh virtual machine ("runner") each time. This one has
+# a single job with 4 steps: check out the code, install Python, install
+# dependencies, run the eval script. If the script exits non-zero (see
+# tests/eval_agent.py - it does this on any failed case), the whole
+# workflow is marked failed and shows up as a red X on the commit.
+
+name: Eval Agent
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # also allows a manual "Run workflow" button in the GitHub UI
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run eval suite
+        run: python tests/eval_agent.py
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

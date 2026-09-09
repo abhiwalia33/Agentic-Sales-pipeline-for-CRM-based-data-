@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(
 from dotenv import load_dotenv
 from openai import OpenAI
 
-from pipeline_agent import run_agent_turn
+from pipeline_agent import ensure_database_exists, run_agent_turn
 
 load_dotenv()
 client = OpenAI()
@@ -51,6 +51,10 @@ CASES = [
 
 
 def main():
+    # data/ is git-ignored, so a fresh checkout (CI, a new clone) has no
+    # pipeline.db yet - same bootstrap app.py relies on for Streamlit Cloud.
+    ensure_database_exists()
+
     print(f"Running {len(CASES)} eval cases against gpt-4o...\n")
     passed_count = 0
 
