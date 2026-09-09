@@ -13,6 +13,9 @@ env/
 # Generated data (recreate via src/generate_data.py -> clean_data.py -> export_for_powerbi.py)
 data/
 
+# Secrets
+.env
+
 # OS
 .DS_Store
 Thumbs.db

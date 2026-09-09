@@ -111,9 +111,65 @@ stage, deal_value, is_member, created_date, close_date`
 Text/CSV**, import each file, then relate `leads.rep_id -> reps.rep_id` and
 `activities.lead_id -> leads.lead_id` in the model view.
 
+## Agentic Q&A layer
+
+`app.py` (Streamlit) + `src/pipeline_agent.py` expose the cleaned data through
+a natural-language Q&A agent: an LLM (OpenAI `gpt-4o`) writes SQL against
+`pipeline.db` via a `query_database` tool, in a loop (`run_agent_turn`) that
+continues until the model has enough to answer. Two independent layers of
+enforcement keep it read-only regardless of what SQL text the model
+generates: the SQLite connection itself is opened in read-only URI mode
+(`?mode=ro` - the real guarantee, enforced by the database engine), plus a
+fast keyword check that rejects non-`SELECT` statements before execution
+(fails with a clear message rather than a confusing low-level DB error).
+Top-line KPIs on the page are queried directly, deterministically - not
+through the LLM - since fixed facts don't need an agent round-trip.
+
+Run locally: `streamlit run app.py` (needs `OPENAI_API_KEY` in a local
+`.env`; see `.env.example`). CLI versions of the same agent, built up
+incrementally while learning tool-use, live in `src/agent_step1.py`
+through `agent_step4.py`.
+
+### Known limitations (found while building it)
+
+- **No grounding beyond the tool description = wrong guesses.** Without an
+  explicit list of canonical `stage` values in the tool description, the
+  model guessed a plausible-but-wrong value (`'Closed Won'` instead of
+  `'Won'`) and confidently reported 0 results as fact. Fixed by naming the
+  exact values in the tool description - but this class of bug (schema/value
+  hallucination) can recur for any column whose real values aren't obvious
+  from the name.
+- **Business-logic conventions aren't inferable either.** The model
+  initially computed "win rate" as wins ÷ *all* leads (including open ones)
+  instead of wins ÷ *closed* deals, a different formula than the one used
+  throughout this project's SQL and Power BI. Fixed with an explicit
+  definition in the tool description.
+- **Ties get silently dropped.** A "who has the highest X" question backed
+  by `ORDER BY ... LIMIT 1` picks one arbitrary row when several are tied,
+  without surfacing that a tie exists. Not fixed - documented as a known
+  gap; the general fix would be re-querying for ties whenever the top value
+  repeats.
+- **Predictive extrapolation without flagging the assumption.** Asked to
+  estimate how many "Negotiation"-stage leads would convert, the agent
+  applied the *overall* blended win rate (48.9%, across every stage) to a
+  more-advanced-stage subgroup that plausibly converts at a different rate
+  - a real but shaky statistical assumption, presented without caveat. The
+  schema can't actually answer the better version of this question (no
+  stage-history tracking - see next bullet), so the honest fix is a
+  transparency one: have the agent explicitly flag estimates/extrapolations
+  as distinct from directly-queried facts, rather than trying to make the
+  estimate itself more accurate.
+
 ## Possible next steps
 
 - Add a `products`/`deal_line_items` table for multi-line deals.
 - Track stage-change history instead of just current stage, to compute
-  stage-to-stage conversion funnels.
+  stage-to-stage conversion funnels - this would also let the agent answer
+  stage-specific conversion questions (see "Known limitations" above)
+  instead of extrapolating from the overall win rate.
 - Parameterize `generate_data.py` volume/seed via CLI args.
+- Add a `list_distinct_values(column)` tool so the agent can check its own
+  assumptions about categorical data at runtime, instead of relying solely
+  on grounding notes written into the tool description by hand.
+- Teach the agent to flag estimates/extrapolations as distinct from
+  directly-queried facts (see "Known limitations" above).
