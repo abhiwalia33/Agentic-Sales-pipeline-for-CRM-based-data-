@@ -53,6 +53,8 @@ vs Non-Member — built on `data/clean/*.csv`, with every headline number
 cross-checked against `src/analysis_queries.sql` run directly on
 `pipeline.db`. See `PROJECT_PLAN.md` for the DAX measures and relationships.
 
+<img width="392" height="215" alt="Power BI Overview page" src="https://github.com/user-attachments/assets/533beb58-5dee-426e-b29d-691b0ae66b7a" />
+
 ## The agentic Q&A layer
 
 The most interesting part: a chat agent that answers plain-English
