@@ -93,6 +93,17 @@ documented in `PROJECT_PLAN.md`, along with two gaps that are *not* fixed
 record of where a first pass at an LLM agent over real data breaks down,
 and why.
 
+### Testing
+
+`tests/eval_agent.py` is a small eval suite — the same manual check done
+throughout this build (ask the agent a question, compare to a number
+already verified via SQL), turned into a repeatable script instead of a
+by-hand check:
+
+```bash
+python tests/eval_agent.py
+```
+
 ### Run it locally
 
 ```bash
