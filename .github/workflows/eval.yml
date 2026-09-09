@@ -29,11 +29,6 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Debug - check if secret arrives (temporary)
-        run: python -c "import os; v = os.environ.get('OPENAI_API_KEY'); print('OPENAI_API_KEY present:', bool(v)); print('length:', len(v) if v else 0)"
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-
       - name: Run eval suite
         run: python tests/eval_agent.py
         env:

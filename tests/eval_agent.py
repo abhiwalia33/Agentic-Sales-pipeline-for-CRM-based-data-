@@ -24,6 +24,14 @@ from openai import OpenAI
 from pipeline_agent import ensure_database_exists, run_agent_turn
 
 load_dotenv()
+
+# Diagnostic (temporary): print whether the key arrived at all, and its
+# length - never the value itself. This runs before OpenAI() so it shows
+# up right here in "Run eval suite" output, even when the client init
+# below fails - no need to hunt for a separate step in the CI UI.
+_key = os.environ.get("OPENAI_API_KEY")
+print(f"[diagnostic] OPENAI_API_KEY present: {bool(_key)}, length: {len(_key) if _key else 0}")
+
 client = OpenAI()
 
 # Each case: a question, and a substring we expect to see in the final
