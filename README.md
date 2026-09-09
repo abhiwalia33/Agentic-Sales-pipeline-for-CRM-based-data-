@@ -53,9 +53,6 @@ vs Non-Member — built on `data/clean/*.csv`, with every headline number
 cross-checked against `src/analysis_queries.sql` run directly on
 `pipeline.db`. See `PROJECT_PLAN.md` for the DAX measures and relationships.
 
-_Add a screenshot or two here once you have them — e.g. the Overview page
-and the Rep Performance table._
-
 ## The agentic Q&A layer
 
 The most interesting part: a chat agent that answers plain-English
@@ -101,10 +98,6 @@ pip install -r requirements.txt
 cp .env.example .env   # then fill in your real OPENAI_API_KEY
 streamlit run app.py
 ```
-
-_Add a screenshot or short GIF of the chat UI here — the stat-tile row and
-one example Q&A with the "How I got this answer" SQL trail expanded is a
-good shot._
 
 ### Deployment
 
