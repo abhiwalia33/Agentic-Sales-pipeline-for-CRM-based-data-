@@ -65,7 +65,12 @@ TOOLS = [
                 "all leads, since open leads (New/Contacted/Qualified/Proposal/"
                 "Negotiation) haven't been won or lost yet. "
                 "Only SELECT statements are permitted - INSERT/UPDATE/DELETE/DROP "
-                "will be rejected."
+                "will be rejected. "
+                "Results are capped at 200 rows. For any count, total, sum, "
+                "average, or rate/percentage, compute it directly in SQL "
+                "(COUNT, SUM, AVG, GROUP BY) rather than selecting raw rows - "
+                "a truncated sample of raw rows is NOT representative of the "
+                "full data and must never be used to estimate a statistic."
             ),
             "parameters": {
                 "type": "object",

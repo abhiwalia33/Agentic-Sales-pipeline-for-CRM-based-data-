@@ -85,13 +85,15 @@ of the build, not just the finished result.
 
 **Real bugs, found and fixed:** while testing, the agent confidently
 guessed a wrong stage label (`'Closed Won'` instead of the real `'Won'`)
-and reported zero results as fact; it also applied the wrong win-rate
-formula (dividing by all leads instead of closed deals only) before the
-tool description was corrected to ground both facts explicitly. Both are
-documented in `PROJECT_PLAN.md`, along with two gaps that are *not* fixed
-(tie-breaking, and unflagged predictive extrapolation) — left as an honest
-record of where a first pass at an LLM agent over real data breaks down,
-and why.
+and reported zero results as fact; applied the wrong win-rate formula
+(dividing by all leads instead of closed deals only); and — caught by the
+eval suite below, not by hand — silently estimated a statistic from a
+truncated, non-random sample of raw rows instead of computing it directly
+in SQL. All three were fixed by grounding the tool description more
+explicitly. Documented in full in `PROJECT_PLAN.md`, along with two gaps
+that are *not* fixed (tie-breaking, and unflagged predictive
+extrapolation) — left as an honest record of where a first pass at an LLM
+agent over real data breaks down, and why.
 
 ### Testing
 

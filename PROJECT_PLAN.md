@@ -144,6 +144,16 @@ through `agent_step4.py`.
   instead of wins ÷ *closed* deals, a different formula than the one used
   throughout this project's SQL and Power BI. Fixed with an explicit
   definition in the tool description.
+- **Truncated samples got treated as representative.** Caught by
+  `tests/eval_agent.py`, not by hand: asked for the overall win rate, the
+  model sometimes wrote a raw row-selecting query (546 matching rows)
+  instead of an aggregate `COUNT`, hit the 200-row cap, and estimated the
+  rate from that truncated, non-random sample (~51% instead of the real
+  48.9% - `ORDER BY` wasn't specified, so the first 200 rows aren't a fair
+  sample). Fixed by telling the tool description to always compute counts/
+  sums/rates directly in SQL rather than estimating from raw rows - a
+  genuinely new failure class from the two above (not a wrong fact or
+  formula, but the model silently trusting a truncated sample).
 - **Ties get silently dropped.** A "who has the highest X" question backed
   by `ORDER BY ... LIMIT 1` picks one arbitrary row when several are tied,
   without surfacing that a tie exists. Not fixed - documented as a known
