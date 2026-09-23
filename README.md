@@ -95,6 +95,23 @@ that are *not* fixed (tie-breaking, and unflagged predictive
 extrapolation) — left as an honest record of where a first pass at an LLM
 agent over real data breaks down, and why.
 
+**Independent verification, fail-open:** every tool-backed answer is also
+checked by a second, independent LLM call
+([`src/verification_agent.py`](src/verification_agent.py)) that re-derives
+its own SQL for the same question — without ever seeing the first query —
+and compares the two results **by value**, not by column names or query
+text, since two correct queries routinely pick different aliases for the
+same column. On disagreement, the original answer is still returned
+unchanged, with a `⚠️ This answer could not be independently verified —
+please double-check.` note appended — the check never blocks or replaces
+an answer, only flags it. Building this hit its own real bug: the first
+version compared rows by exact dict equality and produced a false
+*negative* (two correct-but-differently-aliased queries reported as
+"unverified"), fixed by comparing sorted value-tuples instead of the raw
+dicts. Worth knowing: this roughly doubles the API cost and latency of
+every tool-backed answer, since it's a second full LLM round trip plus a
+second database query.
+
 ### Testing
 
 `tests/eval_agent.py` is a small eval suite — the same manual check done
@@ -144,7 +161,8 @@ the same GHCR image through `Dockerrun.aws.json`):
 ## Tech stack
 
 Python · pandas · SQLite · Power BI (DAX) · OpenAI API (`gpt-4o`, function
-calling) · Streamlit
+calling) · Streamlit · Docker · GitHub Actions (CI/CD) · GitHub Container
+Registry (GHCR) · AWS Elastic Beanstalk
 
 ## Project structure
 

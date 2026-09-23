@@ -130,6 +130,20 @@ Run locally: `streamlit run app.py` (needs `OPENAI_API_KEY` in a local
 incrementally while learning tool-use, live in `src/agent_step1.py`
 through `agent_step4.py`.
 
+### Multi-agent verification
+
+`src/verification_agent.py` adds a second, independent check on every
+tool-backed answer: a separate LLM call re-derives its own SQL for the same
+question - without seeing the first agent's query or result - and
+`compare_results()` cross-checks the two by value, not by column name or
+query text, since two correct queries routinely alias columns differently.
+Disagreement never blocks or replaces the answer; it's flagged with a
+visible `⚠️ This answer could not be independently verified` note appended
+to the response (the final-answer branch of `run_agent_turn` in
+`pipeline_agent.py`). Covered by two dedicated eval cases in
+`tests/eval_agent.py`: one confirming a correct-but-differently-aliased
+answer isn't flagged, one confirming a genuine value mismatch is.
+
 ### Known limitations (found while building it)
 
 - **No grounding beyond the tool description = wrong guesses.** Without an
@@ -169,6 +183,42 @@ through `agent_step4.py`.
   transparency one: have the agent explicitly flag estimates/extrapolations
   as distinct from directly-queried facts, rather than trying to make the
   estimate itself more accurate.
+- **Alias mismatch produced a false-negative "unverified" flag.** Building
+  the independent verification layer (`src/verification_agent.py`), the
+  first version compared the two agents' result rows by exact dict
+  equality. Two independently-generated, both-correct queries for the same
+  question routinely pick different column aliases (`won_deals` vs.
+  `won_deals_count`), so a genuinely correct answer got flagged as
+  unverified purely because of naming, not substance. Fixed by comparing
+  sorted per-row value-tuples instead of the raw dicts - column names
+  stripped out entirely, only the actual data values are compared.
+- **Verification roughly doubles cost and latency.** Every tool-backed
+  answer now triggers a second full LLM round trip (an independent SQL
+  re-derivation) plus a second database query, to check the first agent's
+  work. Not a bug, but a real, deliberate tradeoff worth knowing before
+  scaling this to production traffic - accuracy-checking isn't free.
+
+## Deployment
+
+Three parallel deployment paths - none replaces another:
+
+- **Docker** (`Dockerfile`) - runs `streamlit run app.py`. The database
+  self-heals the same way it does locally and on Streamlit Cloud:
+  `ensure_database_exists()` runs the generate → clean pipeline on first
+  request if `data/pipeline.db` isn't present, so a fresh container needs
+  no manual setup step. `OPENAI_API_KEY` is never baked into the image -
+  selective `COPY` instructions (not `COPY . .`) keep `.env` out entirely -
+  and the key is injected at container runtime instead
+  (`-e OPENAI_API_KEY=...`).
+- **CI/CD** (`.github/workflows/eval.yml`) - on every push to `main`, an
+  `eval` job runs `tests/eval_agent.py`; a `docker` job then builds and
+  pushes the image to GitHub Container Registry (GHCR), gated with
+  `needs: eval` so a failing eval suite blocks the image from publishing.
+  Uses the workflow's own `GITHUB_TOKEN` for GHCR auth - no separate secret
+  needed, just `permissions: packages: write` added at the job level.
+- **AWS Elastic Beanstalk** (`Dockerrun.aws.json`) - a single-container
+  Docker environment pulling the same GHCR image. `OPENAI_API_KEY` is set
+  as an EB environment property, not in the image or the repo.
 
 ## Possible next steps
 

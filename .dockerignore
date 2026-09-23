@@ -1,0 +1,24 @@
+# Defense-in-depth: the Dockerfile's selective COPYs already keep these
+# out of the image (it copies named files/dirs, never `COPY . .`), but this
+# is the safety net if that ever changes - same intent as .gitignore.
+
+.env
+.env.example
+data/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+.git/
+.github/
+.gitignore
+.gitattributes
+.streamlit/secrets.toml
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
