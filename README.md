@@ -134,6 +134,13 @@ docker pull ghcr.io/abhiwalia33/agentic-sales-pipeline-for-crm-based-data:latest
 docker run -p 8501:8501 -e OPENAI_API_KEY=sk-... ghcr.io/abhiwalia33/agentic-sales-pipeline-for-crm-based-data:latest
 ```
 
+#### AWS Elastic Beanstalk
+
+Also deployed via AWS Elastic Beanstalk (single-container Docker, pulling
+the same GHCR image through `Dockerrun.aws.json`):
+
+**Live:** http://crm-agent-env.eba-ufviz2zh.eu-north-1.elasticbeanstalk.com/
+
 ## Tech stack
 
 Python · pandas · SQLite · Power BI (DAX) · OpenAI API (`gpt-4o`, function
