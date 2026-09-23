@@ -59,14 +59,18 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }} # auto-provided, not a new secret
 
       - name: Compute image tags
-        # ghcr.io requires a lowercase image name, but a GitHub repo name
-        # can contain uppercase letters (this repo's does) - metadata-action
-        # handles that normalization, plus tagging with both `latest` and
-        # the commit SHA (so old images stay addressable after `latest` moves).
+        # Explicit image name, not derived from github.repository: this
+        # repo's name ends in a hyphen ("...-based-data-"), and while
+        # metadata-action lowercases the name, it does NOT strip a
+        # trailing hyphen - producing "...based-data-" as the image ref,
+        # which Docker's reference-format parser rejects outright
+        # ("invalid reference format"). Hardcoding a valid name here
+        # sidesteps that rather than trying to sanitize the repo name at
+        # runtime.
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}
+          images: ghcr.io/abhiwalia33/agentic-sales-pipeline-for-crm-based-data
           tags: |
             type=raw,value=latest
             type=sha,format=long
