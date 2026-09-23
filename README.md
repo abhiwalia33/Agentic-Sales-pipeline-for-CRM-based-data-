@@ -133,12 +133,12 @@ streamlit run app.py
 
 ### Deployment
 
-Deployed on **Streamlit Community Cloud**, connected directly to this
-GitHub repo — no Docker/manual server setup. `data/pipeline.db` is
-git-ignored, so a fresh deploy has no data on first boot;
-`ensure_database_exists()` in `pipeline_agent.py` detects that and runs the
-generate → clean pipeline automatically on first load, deterministically
-(same seeded data every time).
+#### AWS Elastic Beanstalk
+
+Also deployed via AWS Elastic Beanstalk (single-container Docker, pulling
+the same GHCR image through `Dockerrun.aws.json`):
+
+**Live:** http://crm-agent-env.eba-ufviz2zh.eu-north-1.elasticbeanstalk.com/
 
 #### Containerized deployment
 
@@ -151,12 +151,14 @@ docker pull ghcr.io/abhiwalia33/agentic-sales-pipeline-for-crm-based-data:latest
 docker run -p 8501:8501 -e OPENAI_API_KEY=sk-... ghcr.io/abhiwalia33/agentic-sales-pipeline-for-crm-based-data:latest
 ```
 
-#### AWS Elastic Beanstalk
+#### Streamlit Community Cloud
 
-Also deployed via AWS Elastic Beanstalk (single-container Docker, pulling
-the same GHCR image through `Dockerrun.aws.json`):
-
-**Live:** http://crm-agent-env.eba-ufviz2zh.eu-north-1.elasticbeanstalk.com/
+Deployed on **Streamlit Community Cloud**, connected directly to this
+GitHub repo — no Docker/manual server setup. `data/pipeline.db` is
+git-ignored, so a fresh deploy has no data on first boot;
+`ensure_database_exists()` in `pipeline_agent.py` detects that and runs the
+generate → clean pipeline automatically on first load, deterministically
+(same seeded data every time).
 
 ## Tech stack
 
