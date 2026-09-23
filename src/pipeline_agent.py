@@ -178,6 +178,10 @@ def run_agent_turn(client: OpenAI, messages: list) -> tuple[str, list[dict]]:
             demonstrates the tool-use mechanism instead of hiding it.
     """
     trace: list[dict] = []
+    # Captured now, before the loop below mutates `messages` - by the time
+    # the final-answer branch runs, `messages[-1]` is no longer the user's
+    # question, it's the latest tool result.
+    question = messages[-1]["content"]
 
     for _ in range(MAX_ITERATIONS):
         response = client.chat.completions.create(
@@ -188,8 +192,28 @@ def run_agent_turn(client: OpenAI, messages: list) -> tuple[str, list[dict]]:
         assistant_message = response.choices[0].message
 
         if not assistant_message.tool_calls:
-            messages.append({"role": "assistant", "content": assistant_message.content})
-            return assistant_message.content, trace
+            answer = assistant_message.content
+
+            if trace:
+                # Local import - verification_agent.py imports MODEL/TOOLS/
+                # query_database FROM this module, so importing it back at
+                # the top of this file would run before those are defined
+                # yet (circular import). Same reason ensure_database_exists()
+                # above imports generate_data/clean_data locally instead of
+                # at module load time.
+                from verification_agent import verify_answer
+
+                last_sql = trace[-1]["sql"]
+                last_result = trace[-1]["result"]
+                verification = verify_answer(client, question, last_sql, last_result)
+                if not verification["verified"]:
+                    answer += (
+                        "\n\n⚠️ This answer could not be independently "
+                        "verified — please double-check."
+                    )
+
+            messages.append({"role": "assistant", "content": answer})
+            return answer, trace
 
         messages.append(assistant_message)
 

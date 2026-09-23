@@ -22,6 +22,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 from pipeline_agent import ensure_database_exists, run_agent_turn
+from verification_agent import compare_results, verify_answer
 
 load_dotenv()
 client = OpenAI()
@@ -50,6 +51,50 @@ CASES = [
 ]
 
 
+def run_verification_cases() -> tuple[int, int]:
+    """Two checks on the verification layer (src/verification_agent.py),
+    originally proved out by hand in src/test_verify_answer.py - now run
+    automatically so a future change can't silently break either one.
+
+    Case A (live call): two independently-generated queries for the same
+    question very likely use different column aliases for the same value
+    - verify_answer() should still say verified=True, since only the
+    values are compared, not the column names.
+
+    Case B (no LLM call): compare_results() against a manually-constructed
+    second_result holding a genuinely different value. This is the case
+    that proves Case A passing isn't just the comparison being permissive
+    by accident - it should say verified=False here.
+    """
+    passed = 0
+    total = 2
+
+    question = "How many deals did rep REP004 win?"
+    first_sql = "SELECT COUNT(*) AS won_deals FROM leads WHERE rep_id = 'REP004' AND stage = 'Won'"
+    first_result = '{"rows": [{"won_deals": 17}]}'
+
+    result = verify_answer(client, question, first_sql, first_result)
+    ok = result["verified"] is True
+    status = "PASS" if ok else "FAIL"
+    print(f"[{status}] Verification Case A: alias mismatch, same value (expect verified=True)")
+    print(f"        second SQL generated: {result['second_sql']}")
+    print(f"        second result: {result['second_result']}\n")
+    if ok:
+        passed += 1
+
+    mismatched_second_result = '{"rows": [{"count": 16}]}'
+    comparison = compare_results(first_result, mismatched_second_result)
+    ok = comparison["verified"] is False
+    status = "PASS" if ok else "FAIL"
+    print(f"[{status}] Verification Case B: genuine value mismatch, 17 vs 16 (expect verified=False)")
+    print(f"        first result:  {first_result}")
+    print(f"        second result: {mismatched_second_result} (manually constructed)\n")
+    if ok:
+        passed += 1
+
+    return passed, total
+
+
 def main():
     # data/ is git-ignored, so a fresh checkout (CI, a new clone) has no
     # pipeline.db yet - same bootstrap app.py relies on for Streamlit Cloud.
@@ -72,12 +117,20 @@ def main():
         if passed:
             passed_count += 1
 
-    print(f"{passed_count}/{len(CASES)} passed")
+    print(f"{passed_count}/{len(CASES)} agent cases passed")
+
+    print("\nRunning verification-layer cases...\n")
+    v_passed, v_total = run_verification_cases()
+    print(f"{v_passed}/{v_total} verification cases passed")
+
+    total_passed = passed_count + v_passed
+    total_cases = len(CASES) + v_total
+    print(f"\n{total_passed}/{total_cases} total")
 
     # A non-zero exit code is how a CI step (or you, from the terminal)
     # tells "did this run fail" without reading the printed output -
     # this is what makes the script automatable later.
-    if passed_count < len(CASES):
+    if total_passed < total_cases:
         sys.exit(1)
 
 
