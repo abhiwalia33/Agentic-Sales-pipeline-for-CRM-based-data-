@@ -123,6 +123,17 @@ git-ignored, so a fresh deploy has no data on first boot;
 generate → clean pipeline automatically on first load, deterministically
 (same seeded data every time).
 
+#### Containerized deployment
+
+Every push to `main` also builds and publishes a Docker image to GitHub
+Container Registry via CI, once the eval suite passes (`.github/workflows/eval.yml`).
+Pull and run it directly:
+
+```bash
+docker pull ghcr.io/abhiwalia33/agentic-sales-pipeline-for-crm-based-data:latest
+docker run -p 8501:8501 -e OPENAI_API_KEY=sk-... ghcr.io/abhiwalia33/agentic-sales-pipeline-for-crm-based-data:latest
+```
+
 ## Tech stack
 
 Python · pandas · SQLite · Power BI (DAX) · OpenAI API (`gpt-4o`, function
